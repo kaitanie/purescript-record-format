@@ -4,7 +4,8 @@ import Prelude (identity, (<>), class Show, show)
 import Prim.Row as Row
 import Prim.Symbol as Symbol
 import Record as Record
-import Type.Data.Symbol (class IsSymbol, SProxy(..), reflectSymbol)
+import Type.Data.Symbol (class IsSymbol, reflectSymbol)
+import Type.Prelude (Proxy(..))
 
 --------------------------------------------------------------------------------
 -- * Format strings
@@ -23,7 +24,7 @@ data FProxy (fl :: FList) = FProxy
 -- | Format a row with a (type-level) format string. If @row@ doesn't contain
 --   all the necessary fields, constraint resolution fails
 class Format (string :: Symbol) (row :: Row Type) where
-  format :: SProxy string -> Record row -> String
+  format :: Proxy string -> Record row -> String
 
 -- parse the format string and delegate the formatting to @FormatParsed@
 instance formatParsedFormat ::
@@ -48,7 +49,7 @@ instance formatVar ::
   ) => FormatParsed (FCons (Var key) ks) row where
   formatParsed _ row
     = var <> rest
-    where var  = fmtVar (Record.get (SProxy :: SProxy key) row)
+    where var  = fmtVar (Record.get (Proxy :: Proxy key) row)
           rest = formatParsed (FProxy :: FProxy ks) row
 
 instance formatLit ::
@@ -57,7 +58,7 @@ instance formatLit ::
   ) => FormatParsed (FCons (Lit l) ks) row where
   formatParsed _ row
     = lit <> rest
-    where lit  = reflectSymbol (SProxy :: SProxy l)
+    where lit  = reflectSymbol (Proxy :: Proxy l)
           rest = formatParsed (FProxy :: FProxy ks) row
 
 -- | Formatting variables - we don't want to show the quotes around strings, so
@@ -106,5 +107,5 @@ else instance dParseVar ::
   , Symbol.Cons h var var'
   ) => ParseVar h t (Var var') rest
 
-parse :: forall i o. Parse i o => SProxy i -> FProxy o
+parse :: forall i o. Parse i o => Proxy i -> FProxy o
 parse _ = FProxy :: FProxy o
